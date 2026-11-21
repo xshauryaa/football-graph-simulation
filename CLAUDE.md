@@ -198,3 +198,47 @@ A change is complete when:
 - The project builds successfully, or any build limitation is clearly reported.
 - No unrelated files or dependencies were changed.
 - The final explanation states what was implemented and what remains incomplete.
+
+## 12. Future Design Notes (Not Yet Implemented)
+
+These are the author's design intentions for later stages. Do not implement them unprompted; use them to keep today's model compatible with them (see section 10 for scope rules).
+
+### Long-term vision
+
+Two teams play a match that can be watched in real time, with a configurable match length and halves. A manager can change team settings while the match runs: formation, mentality, width, and line height. A viewer and live manager controls are a late-stage goal, not a near-term task.
+
+### Player decision-making is the core engine
+
+Each player will eventually have its own decision-maker. It takes the candidate actions (for example, the pass options from the graph), scores every one with a scoring function, and picks the best. Scoring should combine spatial and attribute inputs with team instructions, so the instructions below should be inputs to scoring rather than hardcoded rules.
+
+### Team instructions (set by the manager, separate from the formation)
+
+Team instructions are kept separate from `Formation`. The same formation can run under different instructions.
+
+- **Mentality:** an enum such as `DEFENSIVE`, `BALANCED`, `ATTACKING`. It biases action scores.
+  - Defensive, for example protecting a lead: favour short, controlled passes within the defensive area; the ball does not need to reach an attacker.
+  - Attacking: favour passes toward attackers over passes to defenders.
+- **Compactness / team spread:** how spread out the team is across the pitch. Low-block ("park the bus") play is not a different formation. A 4-4-2 or 5-4-1 stays as it is, but the spread shrinks and players drop back. Without it, a 5-4-1 can still leave the striker alone in the opposition box and the midfield in the middle of the pitch.
+- **Width:** how wide the team plays across the pitch.
+- **Line height / offset:** how high the defensive line sits. A high value suits an attacking approach, with the defence pushed up.
+
+### Modelling implications
+
+- Instructions modify how formation slot positions are interpreted during play, for example by scaling spread, width, or line height about a reference. They do not change the formation's definition.
+- Keep these as explicit typed values with documented ranges, not free-form numbers (section 4). Make them changeable mid-match, so the model must not assume they are fixed at kickoff.
+- Whether spread, width and line height are continuous sliders or discrete levels is undecided. Ask before fixing the representation.
+
+### MatchState
+
+A `MatchState` object will be needed as the single authoritative source of truth for the live match (section 5). Decision-makers read it when scoring actions, and action resolution writes to it. Expected contents, to be refined when it is built:
+
+- Every player's current coordinates (and the ball's location and possession).
+- Match score and match time (with half).
+- Player stamina or fatigue (the author is unsure about this one; confirm before adding it).
+- Whatever is needed for rule checks. For example, an offside check on every pass requires the positions of all players, the ball, and each team's attack direction at the moment the pass is made.
+
+Design notes:
+
+- Per section 4, keep stable player attributes separate from dynamic state like stamina and live coordinates. Decide who owns live coordinates: `Player.coordinates` today versus `MatchState`. Only one may be authoritative, so resolve this when `MatchState` is introduced rather than duplicating the data.
+- Scoring should be able to read `MatchState` without mutating it, for example by exposing a read-only view to decision-makers.
+- Match score and time feed the team instructions. A lead late in the match is what would push a manager toward a defensive mentality.
