@@ -55,6 +55,34 @@ class CoordinatesTest {
     }
 
     @Test
+    void rotated180FlipsBothAxesAboutPitchCentre() {
+        assertEquals(new Coordinates(95, 58), new Coordinates(10, 10).rotated180(105, 68));
+        assertEquals(new Coordinates(52.5, 34), new Coordinates(52.5, 34).rotated180(105, 68));
+    }
+
+    @Test
+    void rotated180MapsCornersToOppositeCorners() {
+        assertEquals(new Coordinates(105, 68), new Coordinates(0, 0).rotated180(105, 68));
+        assertEquals(new Coordinates(0, 0), new Coordinates(105, 68).rotated180(105, 68));
+    }
+
+    @Test
+    void rotated180TwiceReturnsOriginal() {
+        Coordinates c = new Coordinates(23.5, 41);
+        assertEquals(c, c.rotated180(105, 68).rotated180(105, 68));
+    }
+
+    @Test
+    void rotated180WorksOnFractionalCoordinates() {
+        assertEquals(new Coordinates(0.9, 0.25), new Coordinates(0.1, 0.75).rotated180(1, 1));
+    }
+
+    @Test
+    void rotated180RejectsPointOutsideRectangle() {
+        assertThrows(IllegalArgumentException.class, () -> new Coordinates(106, 10).rotated180(105, 68));
+    }
+
+    @Test
     void equalsAndHashCodeAreValueBased() {
         Coordinates a = new Coordinates(1, 2);
         Coordinates b = new Coordinates(1, 2);

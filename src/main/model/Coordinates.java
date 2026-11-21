@@ -49,6 +49,17 @@ public final class Coordinates {
         return new Coordinates(x + dx, y + dy);
     }
 
+    // Rotates this point 180 degrees about the centre of a length x width rectangle:
+    // (x, y) becomes (length - x, width - y). Both axes flip so a team's left stays its left
+    // when it attacks the other way. Takes plain dimensions rather than a Pitch to avoid a
+    // circular dependency (Pitch already uses Coordinates). Pass (1, 1) to flip fractional
+    // coordinates, or the pitch's length and width to flip metres.
+    // REQUIRES: length and width are finite, and x <= length and y <= width
+    // EFFECTS: returns the rotated point; throws IllegalArgumentException if this point lies outside the rectangle
+    public Coordinates rotated180(double length, double width) {
+        return new Coordinates(length - x, width - y);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
