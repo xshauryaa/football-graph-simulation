@@ -170,4 +170,48 @@ class TeamTest {
         assertEquals(2, team.getSquad().size());
         assertDoesNotThrow(() -> team.setSquad(Arrays.asList(a)));
     }
+
+    @Test
+    void placeOnPitchMovesLineupPlayersButNotBench() {
+        Player starter = player("Starter", 1);
+        Player bench = player("Bench", 2);
+        Coordinates benchBefore = bench.getCoordinates();
+        Slot gk = new Slot(Position.GK, new Coordinates(0.1, 0.5));
+        Team team = new Team("T", Arrays.asList(starter, bench));
+        team.setFormation(twoSlotFormation(gk, new Slot(Position.ST, new Coordinates(0.8, 0.5))));
+        team.assign(gk, starter);
+
+        team.placeOnPitch(new main.model.Pitch(100, 60));
+
+        assertEquals(new Coordinates(10, 30), starter.getCoordinates());
+        assertEquals(benchBefore, bench.getCoordinates());
+    }
+
+    @Test
+    void placeOnPitchRequiresAFormation() {
+        Team team = new Team("T", Arrays.asList(player("A", 1)));
+        assertThrows(IllegalArgumentException.class, () -> team.placeOnPitch(new main.model.Pitch(100, 60)));
+    }
+
+    @Test
+    void twoTeamsCanShareAFormationAtOppositeEnds() {
+        Slot gk = new Slot(Position.GK, new Coordinates(0.1, 0.5));
+        Formation shared = twoSlotFormation(gk, new Slot(Position.ST, new Coordinates(0.8, 0.5)));
+        Player homeKeeper = player("Home", 1);
+        Player awayKeeper = player("Away", 1);
+        Team home = new Team("Home", Arrays.asList(homeKeeper));
+        Team away = new Team("Away", Arrays.asList(awayKeeper));
+        home.setFormation(shared);
+        away.setFormation(shared.flipped());
+        home.assign(shared.getSlots().get(0), homeKeeper);
+        away.assign(away.getLineup().get().getFormation().getSlots().get(0), awayKeeper);
+
+        main.model.Pitch pitch = new main.model.Pitch(100, 60);
+        home.placeOnPitch(pitch);
+        away.placeOnPitch(pitch);
+
+        assertEquals(10, homeKeeper.getCoordinates().getX(), 1e-9);
+        assertEquals(90, awayKeeper.getCoordinates().getX(), 1e-9);
+        assertEquals(30, awayKeeper.getCoordinates().getY(), 1e-9);
+    }
 }

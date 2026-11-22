@@ -154,4 +154,77 @@ class FormationTest {
         assertTrue(other.getSlots().isEmpty());
         assertEquals(3, formation.getSlots().size());
     }
+
+    // --- flipped ---
+
+    @Test
+    void flippedRotatesSlotsKeepingPositions() {
+        Formation f = new Formation("f");
+        f.addSlot(new Slot(Position.LB, new Coordinates(0.25, 0.1)));
+        f.addSlot(new Slot(Position.ST, new Coordinates(0.8, 0.5)));
+
+        Formation flipped = f.flipped();
+
+        assertEquals("f", flipped.getName());
+        assertEquals(2, flipped.getSlots().size());
+        assertEquals(Position.LB, flipped.getSlots().get(0).getPosition());
+        assertEquals(new Coordinates(0.75, 0.9), flipped.getSlots().get(0).getCoordinates());
+        assertEquals(Position.ST, flipped.getSlots().get(1).getPosition());
+        assertEquals(0.2, flipped.getSlots().get(1).getCoordinates().getX(), 1e-9);
+        assertEquals(0.5, flipped.getSlots().get(1).getCoordinates().getY(), 1e-9);
+    }
+
+    @Test
+    void flippedLeavesOriginalUnchangedAndSharesNoSlots() {
+        Coordinates before = gk.getCoordinates();
+        Formation flipped = formation.flipped();
+        assertEquals(before, gk.getCoordinates());
+        assertEquals(3, formation.getSlots().size());
+        for (Slot s : flipped.getSlots()) {
+            assertFalse(formation.getSlots().contains(s));
+        }
+        flipped.addSlot(slot(Position.CM));
+        assertEquals(3, formation.getSlots().size());
+    }
+
+    @Test
+    void flippedRemapsPassingOptionsToTheNewSlots() {
+        formation.setPassingOptions(gk, Arrays.asList(cb, st));
+        formation.setPassingOptions(cb, Arrays.asList(st));
+
+        Formation flipped = formation.flipped();
+        Slot newGk = flipped.getSlots().get(0);
+        Slot newCb = flipped.getSlots().get(1);
+        Slot newSt = flipped.getSlots().get(2);
+
+        assertEquals(Arrays.asList(newCb, newSt), flipped.getPassingOptions(newGk));
+        assertEquals(Collections.singletonList(newSt), flipped.getPassingOptions(newCb));
+        assertTrue(flipped.getPassingOptions(newSt).isEmpty());
+        // original options untouched
+        assertEquals(Arrays.asList(cb, st), formation.getPassingOptions(gk));
+    }
+
+    @Test
+    void flippedTwiceRestoresCoordinatesAndOptionStructure() {
+        formation.setPassingOptions(gk, Arrays.asList(cb));
+        Formation twice = formation.flipped().flipped();
+        for (int i = 0; i < formation.getSlots().size(); i++) {
+            assertEquals(formation.getSlots().get(i).getCoordinates(), twice.getSlots().get(i).getCoordinates());
+            assertEquals(formation.getSlots().get(i).getPosition(), twice.getSlots().get(i).getPosition());
+        }
+        assertEquals(Collections.singletonList(twice.getSlots().get(1)), twice.getPassingOptions(twice.getSlots().get(0)));
+    }
+
+    @Test
+    void flippedEmptyFormationIsEmpty() {
+        assertTrue(new Formation("empty").flipped().getSlots().isEmpty());
+    }
+
+    @Test
+    void flippedFormationKeepsValidity() {
+        for (int i = formation.getSlots().size(); i < Formation.SLOTS_PER_FORMATION; i++) {
+            formation.addSlot(slot(Position.CM));
+        }
+        assertTrue(formation.flipped().isValid());
+    }
 }

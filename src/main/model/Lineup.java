@@ -78,6 +78,22 @@ public class Lineup {
         return Collections.unmodifiableMap(new LinkedHashMap<>(assignments));
     }
 
+    // Moves each assigned player to their slot's nominal location, converted from fractions of the pitch to metres.
+    // This sets the players' live coordinates, so it is meant for kickoff or restarts, not for use during open play.
+    // To place a team attacking the other way, build its lineup from Formation.flipped().
+    // REQUIRES: pitch is not null
+    // EFFECTS: updates the coordinates of every assigned player; unfilled slots are skipped.
+    //          Throws IllegalArgumentException if pitch is null.
+    public void placeOnPitch(Pitch pitch) {
+        if (pitch == null) {
+            throw new IllegalArgumentException("Pitch must not be null");
+        }
+        for (Map.Entry<Slot, Player> entry : assignments.entrySet()) {
+            Coordinates nominal = entry.getKey().getCoordinates();
+            entry.getValue().setCoordinates(nominal.scaled(pitch.getLength(), pitch.getWidth()));
+        }
+    }
+
     // EFFECTS: returns true if the formation is valid and every one of its slots has a player
     public boolean isComplete() {
         return formation.isValid() && assignments.size() == formation.getSlots().size();

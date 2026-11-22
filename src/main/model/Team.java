@@ -96,6 +96,13 @@ public class Team {
         current.assign(slot, playerOn);
     }
 
+    // REQUIRES: a formation has been set and pitch is not null
+    // EFFECTS: moves the lineup's players to their slots' nominal locations on the pitch (see Lineup.placeOnPitch).
+    //          For the team attacking toward x = 0, set a flipped formation: team.setFormation(formation.flipped()).
+    public void placeOnPitch(Pitch pitch) {
+        requireLineup().placeOnPitch(pitch);
+    }
+
     // EFFECTS: returns the squad players who are not in the lineup (all of the squad if there is no lineup)
     public List<Player> getBench() {
         List<Player> bench = new ArrayList<>();

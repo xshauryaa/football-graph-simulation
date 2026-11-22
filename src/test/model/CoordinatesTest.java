@@ -91,4 +91,16 @@ class CoordinatesTest {
         assertNotEquals(a, new Coordinates(2, 1));
         assertNotEquals(a, null);
     }
+
+    @Test
+    void scaledConvertsFractionsToMetres() {
+        assertEquals(new Coordinates(52.5, 17), new Coordinates(0.5, 0.25).scaled(105, 68));
+        assertEquals(new Coordinates(0, 0), new Coordinates(0, 0).scaled(105, 68));
+        assertEquals(new Coordinates(105, 68), new Coordinates(1, 1).scaled(105, 68));
+    }
+
+    @Test
+    void scaledRejectsNegativeDimensions() {
+        assertThrows(IllegalArgumentException.class, () -> new Coordinates(0.5, 0.5).scaled(-1, 68));
+    }
 }

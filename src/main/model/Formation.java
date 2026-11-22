@@ -2,6 +2,7 @@ package main.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,6 +127,28 @@ public class Formation {
             }
         }
         return goalkeepers == 1;
+    }
+
+    // EFFECTS: returns a new formation for a team attacking the opposite way: every slot is rotated 180 degrees
+    //          about the pitch centre (so a left-back stays on the team's own left), keeping its position, and the
+    //          passing options are remapped to the new slots. This formation is left unchanged, and the result
+    //          shares no Slot objects with it, so mutating one never affects the other.
+    public Formation flipped() {
+        Formation flipped = new Formation(name);
+        Map<Slot, Slot> newSlotFor = new HashMap<>();
+        for (Slot slot : slots) {
+            Slot copy = new Slot(slot.getPosition(), slot.getCoordinates().rotated180(1, 1));
+            flipped.addSlot(copy);
+            newSlotFor.put(slot, copy);
+        }
+        for (Map.Entry<Slot, List<Slot>> entry : passingOptions.entrySet()) {
+            List<Slot> mapped = new ArrayList<>();
+            for (Slot option : entry.getValue()) {
+                mapped.add(newSlotFor.get(option));
+            }
+            flipped.setPassingOptions(newSlotFor.get(entry.getKey()), mapped);
+        }
+        return flipped;
     }
 
     private void requireMember(Slot slot) {

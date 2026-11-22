@@ -60,6 +60,14 @@ public final class Coordinates {
         return new Coordinates(length - x, width - y);
     }
 
+    // Scales each axis: (x, y) becomes (x * length, y * width). Used to turn a fractional slot location
+    // (0.0 to 1.0 on both axes) into metres on a pitch of the given size.
+    // REQUIRES: length and width are finite and non-negative
+    // EFFECTS: returns the scaled point; throws IllegalArgumentException if the result is not a valid coordinate
+    public Coordinates scaled(double length, double width) {
+        return new Coordinates(x * length, y * width);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

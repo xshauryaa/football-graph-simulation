@@ -139,4 +139,56 @@ class LineupTest {
         fullLineup.assign(slots[slots.length - 1], player("Last", 99));
         assertTrue(fullLineup.isComplete());
     }
+
+    // --- placeOnPitch ---
+
+    @Test
+    void placeOnPitchConvertsSlotFractionsToMetres() {
+        Player keeper = player("Keeper", 1);
+        Player striker = player("Striker", 9);
+        lineup.assign(gk, keeper);
+        lineup.assign(st, striker);
+
+        lineup.placeOnPitch(new main.model.Pitch(100, 60));
+
+        assertEquals(new Coordinates(5, 30), keeper.getCoordinates());
+        assertEquals(new Coordinates(80, 30), striker.getCoordinates());
+    }
+
+    @Test
+    void placeOnPitchSkipsUnfilledSlots() {
+        Player keeper = player("Keeper", 1);
+        lineup.assign(gk, keeper);
+        lineup.placeOnPitch(new main.model.Pitch(100, 60));
+        assertEquals(new Coordinates(5, 30), keeper.getCoordinates());
+        assertEquals(1, lineup.getAssignments().size());
+    }
+
+    @Test
+    void placeOnPitchRejectsNullPitch() {
+        assertThrows(IllegalArgumentException.class, () -> lineup.placeOnPitch(null));
+    }
+
+    @Test
+    void flippedFormationPlacesTeamOnTheOppositeSide() {
+        Formation flipped = formation.flipped();
+        Lineup awayLineup = new Lineup(flipped);
+        Player keeper = player("AwayKeeper", 1);
+        awayLineup.assign(flipped.getSlots().get(0), keeper);
+
+        awayLineup.placeOnPitch(new main.model.Pitch(100, 60));
+
+        assertEquals(95, keeper.getCoordinates().getX(), 1e-9);
+        assertEquals(30, keeper.getCoordinates().getY(), 1e-9);
+    }
+
+    @Test
+    void playersCanMoveAwayAfterBeingPlaced() {
+        Player keeper = player("Keeper", 1);
+        lineup.assign(gk, keeper);
+        lineup.placeOnPitch(new main.model.Pitch(100, 60));
+        keeper.setCoordinates(new Coordinates(40, 10));
+        assertEquals(new Coordinates(40, 10), keeper.getCoordinates());
+        assertEquals(new Coordinates(0.05, 0.5), gk.getCoordinates());
+    }
 }
