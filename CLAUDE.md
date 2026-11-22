@@ -178,10 +178,10 @@ Make conservative assumptions for reversible implementation details and state th
 
 Do not independently add:
 
-- A graphical match viewer or animation system.
+- A graphical match viewer or animation system. (A team-builder UI is in scope; see section 12.)
 - Online multiplayer, networking, or a server API.
 - Persistent storage or a database.
-- Real-world player datasets, scraping, or external APIs.
+- Scraping or external APIs. (Loading real players from locally supplied datasets is in scope; see section 12.)
 - Machine-learning-based tactics or player behaviour.
 - Full official football-law enforcement.
 - A complex physics engine.
@@ -239,6 +239,34 @@ A `MatchState` object will be needed as the single authoritative source of truth
 
 Design notes:
 
-- Per section 4, keep stable player attributes separate from dynamic state like stamina and live coordinates. Decide who owns live coordinates: `Player.coordinates` today versus `MatchState`. Only one may be authoritative, so resolve this when `MatchState` is introduced rather than duplicating the data.
+- Per section 4, keep stable player attributes separate from dynamic state like stamina and live coordinates. **Decision:** `Player.coordinates` stores the live coordinates. `MatchState` is the single authority for *where state is read from*, not a second store: it reads player coordinates (and other state) from the objects that hold them and relays them to callers. Do not copy coordinates into `MatchState` or the graph.
 - Scoring should be able to read `MatchState` without mutating it, for example by exposing a read-only view to decision-makers.
 - Match score and time feed the team instructions. A lead late in the match is what would push a manager toward a defensive mentality.
+
+### Tactical shapes (long-term; not part of V1)
+
+Managers reason about named shapes inside a formation, and the model should leave room for them.
+
+- **Lines:** ordered groups of slots, such as the back four, the midfield line, and the attack line (in a 4-3-3: LW, ST, RW). A player breaking their line, for example a full-back pushing up, leaves space behind. That is sometimes right (attacking phases) and sometimes costly (counter-attacks).
+- **Units:** other groupings, such as the triangle of two CBs and the holding midfielder in a 4-3-3, or a diamond.
+
+Intended design:
+
+- **Reference layer (`Formation`):** a shape is a named group of slots, stored as data like the passing-options map. It is a template that can be shared across teams and is flipped with the formation.
+- **Live layer (graph):** evaluate each shape against live coordinates, for example a line's deviation measured along the attack direction, or a triangle's side lengths versus the reference. The result is a signal, not a hard rule.
+- **Decision layer (`tactics`):** shape integrity is one input to action scoring. Its weight depends on context (counter-attack risk, mentality, compactness and line-height instructions). "Don't break the line" is a weighted preference, not a constraint.
+
+Notes:
+
+- Anything that references slots (passing options now, shapes later) must be remapped when `Formation.flipped()` creates new `Slot` objects. Consider stable slot identifiers when shapes are introduced.
+- Shape weights are tunable, football-realism assumptions. Keep them configurable and do not claim realism without a reference (section 8).
+
+### Real players and the team-builder UI (in scope, next phase)
+
+The project uses real players (current and historical, e.g. Mbappe, Messi, Yamal, Maldini, Maradona), loaded from datasets the author supplies locally (CSV, and the project's own JSON format). Not random or invented players.
+
+- Parsing and writing live in their own package (e.g. `data` or `io`), not in `model`. Model classes must not know about file formats; the loader maps rows to model objects (section 3 dependency direction).
+- JSON reading and writing are custom-built (no JSON library), in keeping with the standard-library-first rule. CSV needs only the standard library.
+- Add only the player attributes the current feature needs (section 4), and map dataset columns to them explicitly. Document the scale and meaning of each rating, and validate it on load.
+- Check each dataset's licence and source before committing its data to the repository.
+- The first UI is a team builder: choose a formation, load a squad, and see the layout on a pitch. It is not a match viewer. The toolkit is undecided (Swing vs JavaFX); the UI must depend on the model, never the reverse.
