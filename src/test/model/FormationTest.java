@@ -2,11 +2,6 @@ package test.model;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -58,63 +53,6 @@ class FormationTest {
     @Test
     void slotsViewIsUnmodifiable() {
         assertThrows(UnsupportedOperationException.class, () -> formation.getSlots().add(slot(Position.CM)));
-    }
-
-    @Test
-    void passingOptionsAreEmptyUntilSet() {
-        assertTrue(formation.getPassingOptions(gk).isEmpty());
-    }
-
-    @Test
-    void setAndGetPassingOptions() {
-        formation.setPassingOptions(gk, Arrays.asList(cb, st));
-        assertEquals(Arrays.asList(cb, st), formation.getPassingOptions(gk));
-    }
-
-    @Test
-    void setPassingOptionsRejectsInvalidInput() {
-        Slot outsider = slot(Position.CM);
-        assertThrows(IllegalArgumentException.class, () -> formation.setPassingOptions(null, Arrays.asList(cb)));
-        assertThrows(IllegalArgumentException.class, () -> formation.setPassingOptions(outsider, Arrays.asList(cb)));
-        assertThrows(IllegalArgumentException.class, () -> formation.setPassingOptions(gk, null));
-        assertThrows(IllegalArgumentException.class, () -> formation.setPassingOptions(gk, Arrays.asList(cb, null)));
-        assertThrows(IllegalArgumentException.class, () -> formation.setPassingOptions(gk, Arrays.asList(outsider)));
-        assertThrows(IllegalArgumentException.class, () -> formation.setPassingOptions(gk, Arrays.asList(gk)));
-        assertThrows(IllegalArgumentException.class, () -> formation.setPassingOptions(gk, Arrays.asList(cb, cb)));
-        assertTrue(formation.getPassingOptions(gk).isEmpty());
-    }
-
-    @Test
-    void getPassingOptionsRejectsUnknownSlot() {
-        assertThrows(IllegalArgumentException.class, () -> formation.getPassingOptions(slot(Position.CM)));
-    }
-
-    @Test
-    void setPassingOptionsCopiesInput() {
-        List<Slot> source = new java.util.ArrayList<>(Arrays.asList(cb));
-        formation.setPassingOptions(gk, source);
-        source.add(st);
-        assertEquals(Collections.singletonList(cb), formation.getPassingOptions(gk));
-    }
-
-    @Test
-    void passingOptionViewsAreUnmodifiable() {
-        formation.setPassingOptions(gk, Arrays.asList(cb));
-        assertThrows(UnsupportedOperationException.class, () -> formation.getPassingOptions(gk).add(st));
-        Map<Slot, List<Slot>> all = formation.getPassingOptions();
-        assertThrows(UnsupportedOperationException.class, () -> all.put(st, Arrays.asList(gk)));
-        assertThrows(UnsupportedOperationException.class, () -> all.get(gk).add(st));
-        assertEquals(Collections.singletonList(cb), formation.getPassingOptions(gk));
-    }
-
-    @Test
-    void removeSlotCleansUpPassingOptions() {
-        formation.setPassingOptions(gk, Arrays.asList(cb, st));
-        formation.setPassingOptions(cb, Arrays.asList(st));
-        assertTrue(formation.removeSlot(cb));
-        assertFalse(formation.getSlots().contains(cb));
-        assertEquals(Collections.singletonList(st), formation.getPassingOptions(gk));
-        assertFalse(formation.getPassingOptions().containsKey(cb));
     }
 
     @Test
@@ -188,34 +126,6 @@ class FormationTest {
     }
 
     @Test
-    void flippedRemapsPassingOptionsToTheNewSlots() {
-        formation.setPassingOptions(gk, Arrays.asList(cb, st));
-        formation.setPassingOptions(cb, Arrays.asList(st));
-
-        Formation flipped = formation.flipped();
-        Slot newGk = flipped.getSlots().get(0);
-        Slot newCb = flipped.getSlots().get(1);
-        Slot newSt = flipped.getSlots().get(2);
-
-        assertEquals(Arrays.asList(newCb, newSt), flipped.getPassingOptions(newGk));
-        assertEquals(Collections.singletonList(newSt), flipped.getPassingOptions(newCb));
-        assertTrue(flipped.getPassingOptions(newSt).isEmpty());
-        // original options untouched
-        assertEquals(Arrays.asList(cb, st), formation.getPassingOptions(gk));
-    }
-
-    @Test
-    void flippedTwiceRestoresCoordinatesAndOptionStructure() {
-        formation.setPassingOptions(gk, Arrays.asList(cb));
-        Formation twice = formation.flipped().flipped();
-        for (int i = 0; i < formation.getSlots().size(); i++) {
-            assertEquals(formation.getSlots().get(i).getCoordinates(), twice.getSlots().get(i).getCoordinates());
-            assertEquals(formation.getSlots().get(i).getPosition(), twice.getSlots().get(i).getPosition());
-        }
-        assertEquals(Collections.singletonList(twice.getSlots().get(1)), twice.getPassingOptions(twice.getSlots().get(0)));
-    }
-
-    @Test
     void flippedEmptyFormationIsEmpty() {
         assertTrue(new Formation("empty").flipped().getSlots().isEmpty());
     }
@@ -226,5 +136,21 @@ class FormationTest {
             formation.addSlot(slot(Position.CM));
         }
         assertTrue(formation.flipped().isValid());
+    }
+
+    @Test
+    void flippedTwiceRestoresCoordinatesAndPositions() {
+        Formation twice = formation.flipped().flipped();
+        for (int i = 0; i < formation.getSlots().size(); i++) {
+            assertEquals(formation.getSlots().get(i).getCoordinates(), twice.getSlots().get(i).getCoordinates());
+            assertEquals(formation.getSlots().get(i).getPosition(), twice.getSlots().get(i).getPosition());
+        }
+    }
+
+    @Test
+    void removeSlotRemovesIt() {
+        assertTrue(formation.removeSlot(cb));
+        assertFalse(formation.getSlots().contains(cb));
+        assertEquals(2, formation.getSlots().size());
     }
 }
