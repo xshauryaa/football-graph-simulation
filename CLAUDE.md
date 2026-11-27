@@ -252,13 +252,13 @@ Managers reason about named shapes inside a formation, and the model should leav
 
 Intended design:
 
-- **Reference layer (`Formation`):** a shape is a named group of slots, stored as data like the passing-options map. It is a template that can be shared across teams and is flipped with the formation.
+- **Reference layer (`Formation`):** a shape is a named group of slots, stored as data (slot groupings). It is a template that can be shared across teams and is flipped with the formation.
 - **Live layer (graph):** evaluate each shape against live coordinates, for example a line's deviation measured along the attack direction, or a triangle's side lengths versus the reference. The result is a signal, not a hard rule.
 - **Decision layer (`tactics`):** shape integrity is one input to action scoring. Its weight depends on context (counter-attack risk, mentality, compactness and line-height instructions). "Don't break the line" is a weighted preference, not a constraint.
 
 Notes:
 
-- Anything that references slots (passing options now, shapes later) must be remapped when `Formation.flipped()` creates new `Slot` objects. Consider stable slot identifiers when shapes are introduced.
+- Anything that references slots (shapes, once introduced) must be remapped when `Formation.flipped()` creates new `Slot` objects. Consider stable slot identifiers when shapes are introduced.
 - Shape weights are tunable, football-realism assumptions. Keep them configurable and do not claim realism without a reference (section 8).
 
 ### Real players and the team-builder UI (in scope, next phase)
@@ -270,3 +270,59 @@ The project uses real players (current and historical, e.g. Mbappe, Messi, Yamal
 - Add only the player attributes the current feature needs (section 4), and map dataset columns to them explicitly. Document the scale and meaning of each rating, and validate it on load.
 - Check each dataset's licence and source before committing its data to the repository.
 - The first UI is a team builder: choose a formation, load a squad, and see the layout on a pitch. It is not a match viewer. The toolkit is undecided (Swing vs JavaFX); the UI must depend on the model, never the reverse.
+
+### Passing graph: every player can pass to every player
+
+The graph is complete: any player can in principle pass to any other teammate (the goalkeeper to a striker included). Nothing in `Formation` restricts passing. Whether a pass is chosen depends only on its live feasibility and its score, so a poor pass is one with a low score, not a missing edge. The live graph is built from the lineup's players (every ordered teammate pair), and `Formation` stores no pass links. Do not add static pass restrictions to formations.
+
+### Player attributes and positional suitability (deferred until real players are needed)
+
+Do not start this until the core is in place (formations, `Ball`, `MatchState`, the match loop, player decision-making) and real players are actually needed. Captured from a brainstorm; refine before building.
+
+**Goal:** give every player 0–100 attributes, derive combined metrics from them, and score how well each player suits every position (and later, tactical roles), returning a ranked list.
+
+**Decisions and cautions from the brainstorm:**
+
+- **Dataset first.** Choose the primary dataset, then take its attribute columns as the base set. Do not mix rating systems: SoFIFA/EA-style ratings (0–100) and Football-Manager-style ratings (1–20, decisions/anticipation/off-the-ball) do not line up. Use one rating scale for every player, current and historical. Real-world stat sources (FBref, StatsBomb, DataMB) do not cover legends consistently, so use them only for calibration, if at all.
+- **Include goalkeeper attributes** (diving, handling, reflexes, kicking, keeper positioning). Without them, GK suitability is meaningless.
+- **Include preferred foot and weak foot.** Otherwise LW/RW (and inverted vs traditional roles) cannot be told apart.
+- **Avoid overlapping attributes** (e.g. positioning vs defensive positioning; heading vs aerial ability vs jumping; awareness vs marking). They double-count in weighted sums.
+- **Positions and tactical roles are separate rankings.** Rank positions using the `Position` enum, then roles within a position. Decide how LWB/RWB/LM/RM/CF are profiled: their own profiles, or mapped to the nearest one.
+
+**Intended design:**
+
+- **One scoring mechanism:** a `WeightedFormula` (input → weight) reused for derived metrics, position suitability and role suitability. Weights must sum to 1 (validated), so outputs stay 0–100. Keep it to one layer: attributes → metrics → position/role scores. Metrics are not built from other metrics.
+- `Attribute` enum plus an immutable `PlayerAttributes` (`EnumMap`) in `model`, held by `Player` as stable data, separate from live match state.
+- Evaluation classes (`WeightedFormula`, `PositionProfile`, `RoleProfile`, the suitability engine, `PlayerEvaluation`) in their own package (e.g. `evaluation`). They depend on `model`, never the reverse.
+- Profile weights are realism assumptions. Store them as data in the project's JSON format and keep them configurable (section 8).
+- `Player.playablePositions` stays as "what the dataset says". Computed suitability is a separate opinion; the team builder can flag disagreements.
+- Match actions (e.g. pass feasibility in the graph) read raw attributes directly, not positional suitability. Suitability is for selection, not for the match engine.
+
+**Suggested order when started:** choose the dataset → `Attribute` enum (with GK attributes and foot) → `PlayerAttributes` on `Player` → CSV loader → `WeightedFormula` and position profiles → tactical roles last.
+
+## 13. Roadmap
+
+Working order agreed with the author. Update this list as items are finished or re-ordered.
+
+**Done**
+
+1. Domain basics: `Pitch`, `Coordinates`, `Position`, `Player`, `Team` with validation and tests.
+2. `Slot`, `Formation` (complete passing graph, no stored pass links), `Lineup`, team lineup and substitutions.
+3. `Formation.flipped()` and `placeOnPitch` for kickoff placement.
+
+**Next**
+
+4. Concrete formations in `Formations`, built line by line from per-line helpers (in progress: 4-3-3 x4, 4-4-2 x3, 4-2-4, 4-2-3-1, 4-1-2-1-2 narrow/wide, 3-4-3, 3-4-3 diamond, 5-3-2, 5-4-1, 5-2-1-2 exist). Then a looped `FormationsTest` covering all of them.
+5. `Ball`.
+6. `MatchState`, reading live state from its owners (section 12).
+7. The match: loop, time, halves, kickoff and restarts.
+8. Live graph: typed, weighted edges built from the lineup and live coordinates (complete pass graph, feasibility weights).
+9. Player decision-making (`tactics`): score candidate actions and pick the best; then resolution updates state and refreshes the graph.
+10. Team instructions: mentality, compactness, width, line height.
+
+**Later (not before the core above is working)**
+
+- Team-builder UI and the data layer (CSV loading, custom JSON reader/writer). Confirm with the author where this sits relative to items 5–10.
+- Player attributes and positional suitability, once real players are needed.
+- Tactical shapes (lines and units).
+- Match viewer with live manager controls.
