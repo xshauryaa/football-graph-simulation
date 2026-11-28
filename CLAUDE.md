@@ -323,11 +323,11 @@ Working order agreed with the author. Update this list as items are finished or 
 2. `Slot`, `Formation` (complete passing graph, no stored pass links), `Lineup`, team lineup and substitutions.
 3. `Formation.flipped()` and `placeOnPitch` for kickoff placement.
 4. `Formations`: 16 concrete formations built line by line, with a parameterized `FormationsTest`; console formation viewer in `main.Main`.
+5. `Ball`: held (position = holder's coordinates) or loose, with last-touch tracking; `Coordinates` may be negative so off-pitch points exist.
+6. `Match` (model: teams, ball, score, periods, clock, attack directions with half-time swap) and `Kickoff` (simulation: own-half arrangement, taker on the centre spot). Formations stay written toward x = 1; direction is applied at placement, because `Team.setFormation` clears the lineup.
 
 **Next**
 
-5. `Ball`: held by a player (position = that player's coordinates, not stored twice) or loose (own coordinates); no height yet.
-6. `Match`: owns the pitch, both teams, ball, score, clock/half and attack directions; kickoff setup and half-time side swap.
 7. `MatchState`: a read-only view over `Match` (section 12).
 8. The time-stepped match loop, restarts, and rule detection (see "Restarts and set pieces" in section 12).
 9. Live graph: typed, weighted edges built from the lineup and live coordinates (complete pass graph, feasibility weights).
