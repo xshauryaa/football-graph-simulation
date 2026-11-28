@@ -61,4 +61,13 @@ class PitchTest {
         assertTrue(pitch.contains(new Coordinates(100, 10)));
         assertFalse(pitch.contains(new Coordinates(10, 100)));
     }
+
+    @Test
+    void goalCentresAreOnTheGoalLines() {
+        Pitch pitch = new Pitch(105, 68);
+        assertEquals(new Coordinates(105, 34), pitch.getGoalCentre(main.model.AttackDirection.TOWARD_MAX_X));
+        assertEquals(new Coordinates(0, 34), pitch.getGoalCentre(main.model.AttackDirection.TOWARD_MIN_X));
+        assertThrows(IllegalArgumentException.class, () -> pitch.getGoalCentre(null));
+        assertEquals(7.32, Pitch.GOAL_WIDTH, 1e-9);
+    }
 }

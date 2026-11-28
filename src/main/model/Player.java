@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Player {
+public class Player implements PlayerView {
 
     public static final int MIN_NUMBER = 1;
     public static final int MAX_NUMBER = 99;

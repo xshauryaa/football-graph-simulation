@@ -2,6 +2,9 @@ package main.model;
 
 public class Pitch {
 
+    // Width of a goal mouth between the posts, in metres (Laws of the Game: 7.32 m / 8 yards).
+    public static final double GOAL_WIDTH = 7.32;
+
     // forms a 2d plane with length and width, where the top left corner is (0,0) and the bottom right corner is (length, width)
     private int length; // in meters
     private int width;  // in meters
@@ -20,6 +23,17 @@ public class Pitch {
         double x = coordinates.getX();
         double y = coordinates.getY();
         return x >= 0 && x <= length && y >= 0 && y <= width;
+    }
+
+    // EFFECTS: returns the centre of the goal at the end the direction points to:
+    //          (length, width / 2) for TOWARD_MAX_X, (0, width / 2) for TOWARD_MIN_X.
+    //          Throws IllegalArgumentException if end is null.
+    public Coordinates getGoalCentre(AttackDirection end) {
+        if (end == null) {
+            throw new IllegalArgumentException("End must not be null");
+        }
+        double x = end == AttackDirection.TOWARD_MAX_X ? length : 0;
+        return new Coordinates(x, width / 2.0);
     }
 
     private static void validateDimension(int value, String name) {
