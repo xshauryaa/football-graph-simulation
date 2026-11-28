@@ -79,7 +79,7 @@ class FormationsTest {
                         Position.LM, 1, Position.CM, 2, Position.RM, 1, Position.ST, 2),
                 new Case("4-4-2 Attack", Formations::fourFourTwoAttack,
                         Position.GK, 1, Position.LB, 1, Position.CB, 2, Position.RB, 1,
-                        Position.LM, 1, Position.CM, 2, Position.RM, 1, Position.ST, 2),
+                        Position.LM, 1, Position.CAM, 2, Position.RM, 1, Position.ST, 2),
                 new Case("4-4-2 Holding", Formations::fourFourTwoHolding,
                         Position.GK, 1, Position.LB, 1, Position.CB, 2, Position.RB, 1,
                         Position.LM, 1, Position.CDM, 2, Position.RM, 1, Position.ST, 2),

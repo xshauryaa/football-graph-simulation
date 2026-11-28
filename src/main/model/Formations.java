@@ -27,7 +27,7 @@ public final class Formations {
     // The shape of a midfield four.
     private enum MidfieldFourRole {
         DEFAULT,        // flat: LM, CM, CM, RM
-        ATTACK,         // LM, CM, CM, RM with the whole line, especially the wide players, pushed higher
+        ATTACK,         // LM, CAM, CAM, RM: both central players advanced behind the forwards
         HOLDING,        // LM, CDM, CDM, RM: a double pivot sitting deeper
         DIAMOND,        // wide diamond: CDM at the base, LM and RM on the flanks, CAM at the tip
         NARROW_DIAMOND  // narrow diamond: CDM at the base, two CMs inside, CAM at the tip
@@ -87,7 +87,7 @@ public final class Formations {
         return f;
     }
 
-    // EFFECTS: returns a new 4-4-2 Attack: back four, a high midfield four, two strikers
+    // EFFECTS: returns a new 4-4-2 Attack: back four, LM-CAM-CAM-RM, two strikers
     public static Formation fourFourTwoAttack() {
         Formation f = new Formation("4-4-2 Attack");
         addGoalkeeper(f);
@@ -284,10 +284,10 @@ public final class Formations {
     private static void addMidfieldFour(Formation formation, MidfieldFourRole role) {
         switch (role) {
             case ATTACK:
-                add(formation, Position.LM, 0.60, 0.12);
-                add(formation, Position.CM, 0.52, 0.38);
-                add(formation, Position.CM, 0.52, 0.62);
-                add(formation, Position.RM, 0.60, 0.88);
+                add(formation, Position.LM, 0.55, 0.12);
+                add(formation, Position.CAM, 0.62, 0.38);
+                add(formation, Position.CAM, 0.62, 0.62);
+                add(formation, Position.RM, 0.55, 0.88);
                 break;
             case HOLDING:
                 add(formation, Position.LM, 0.50, 0.12);
