@@ -15,9 +15,11 @@ public class Pitch {
         this.width = width;
     }
 
-    // EFFECTS: returns true if the coordinates lie on the pitch (edges included)
+    // EFFECTS: returns true if the coordinates lie on the pitch (edges included): 0 <= x <= length and 0 <= y <= width
     public boolean contains(Coordinates coordinates) {
-        return coordinates.getX() <= length && coordinates.getY() <= width;
+        double x = coordinates.getX();
+        double y = coordinates.getY();
+        return x >= 0 && x <= length && y >= 0 && y <= width;
     }
 
     private static void validateDimension(int value, String name) {

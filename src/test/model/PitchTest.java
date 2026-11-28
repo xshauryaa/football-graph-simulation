@@ -49,6 +49,13 @@ class PitchTest {
     }
 
     @Test
+    void doesNotContainPointsBeforeTheOrigin() {
+        Pitch pitch = new Pitch(105, 68);
+        assertFalse(pitch.contains(new Coordinates(-0.1, 10)));
+        assertFalse(pitch.contains(new Coordinates(10, -0.1)));
+    }
+
+    @Test
     void lengthAndWidthAreNotInterchangeable() {
         Pitch pitch = new Pitch(105, 68);
         assertTrue(pitch.contains(new Coordinates(100, 10)));

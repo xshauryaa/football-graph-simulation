@@ -31,6 +31,12 @@ class SlotTest {
     }
 
     @Test
+    void rejectsNegativeCoordinates() {
+        assertThrows(IllegalArgumentException.class, () -> new Slot(Position.ST, new Coordinates(-0.01, 0.5)));
+        assertThrows(IllegalArgumentException.class, () -> new Slot(Position.ST, new Coordinates(0.5, -0.01)));
+    }
+
+    @Test
     void rejectsNulls() {
         assertThrows(IllegalArgumentException.class, () -> new Slot(null, new Coordinates(0.5, 0.5)));
         assertThrows(IllegalArgumentException.class, () -> new Slot(Position.CM, null));

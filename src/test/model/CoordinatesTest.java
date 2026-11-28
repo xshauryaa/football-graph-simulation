@@ -21,9 +21,10 @@ class CoordinatesTest {
     }
 
     @Test
-    void rejectsNegativeValues() {
-        assertThrows(IllegalArgumentException.class, () -> new Coordinates(-0.1, 5));
-        assertThrows(IllegalArgumentException.class, () -> new Coordinates(5, -0.1));
+    void allowsNegativeValuesForPointsOffThePitch() {
+        Coordinates c = new Coordinates(-0.5, -2);
+        assertEquals(-0.5, c.getX());
+        assertEquals(-2, c.getY());
     }
 
     @Test
@@ -50,8 +51,8 @@ class CoordinatesTest {
     }
 
     @Test
-    void translateRejectsResultBelowZero() {
-        assertThrows(IllegalArgumentException.class, () -> new Coordinates(1, 1).translate(-2, 0));
+    void translateCanGoBelowZero() {
+        assertEquals(new Coordinates(-1, 1), new Coordinates(1, 1).translate(-2, 0));
     }
 
     @Test
@@ -78,8 +79,8 @@ class CoordinatesTest {
     }
 
     @Test
-    void rotated180RejectsPointOutsideRectangle() {
-        assertThrows(IllegalArgumentException.class, () -> new Coordinates(106, 10).rotated180(105, 68));
+    void rotated180OfPointOutsideRectangleLandsOutsideOnTheOtherSide() {
+        assertEquals(new Coordinates(-1, 58), new Coordinates(106, 10).rotated180(105, 68));
     }
 
     @Test
@@ -100,7 +101,8 @@ class CoordinatesTest {
     }
 
     @Test
-    void scaledRejectsNegativeDimensions() {
-        assertThrows(IllegalArgumentException.class, () -> new Coordinates(0.5, 0.5).scaled(-1, 68));
+    void scaledRejectsNonFiniteResult() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Coordinates(0.5, 0.5).scaled(Double.POSITIVE_INFINITY, 68));
     }
 }
