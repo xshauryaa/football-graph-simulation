@@ -271,6 +271,19 @@ The project uses real players (current and historical, e.g. Mbappe, Messi, Yamal
 - Check each dataset's licence and source before committing its data to the repository.
 - The first UI is a team builder: choose a formation, load a squad, and see the layout on a pitch. It is not a match viewer. The toolkit is undecided (Swing vs JavaFX); the UI must depend on the model, never the reverse.
 
+### Simulation timing and restarts
+
+**Decision:** the simulation is time-stepped, with fixed ticks of simulated time. A pass takes several ticks to travel, and players move every tick, so the ball needs velocity and an in-flight state.
+
+**Restarts and set pieces** (kickoff after a goal, throw-in, corner, goal kick, free kick, penalty):
+
+- **Detection** lives in a rules component in `simulation` (e.g. a `Referee`), not in `Match` or `Ball`. Each tick it checks the ball against the pitch: over a goal line between the posts is a goal; elsewhere over a goal line is a corner or goal kick, depending on who touched it last; over a touchline is a throw-in. Detection needs the last player to touch the ball.
+- **The restart type** is an enum (`KICK_OFF`, `THROW_IN`, `CORNER`, `GOAL_KICK`, ...) plus where it is taken and by which team.
+- **Arrangement** (where every player should stand) is computed by a separate set-piece component, one strategy per restart type, which returns target coordinates for each player. Kickoff is the simple case. Corners and free kicks depend on tactics (who goes up, zonal or man marking), so they belong with team instructions later.
+- **`Match`** applies a restart: ball placement, possession, and player positions. It coordinates; it does not contain the rules or the arrangements.
+- **Teleport vs move:** for V1, players can be placed directly at their targets. Long term, only the kickoff should teleport; for other restarts, players move to their targets during dead-ball time. Keep the API returning target positions, so switching later needs no redesign.
+- **Kickoff is not the formation:** every team must be in its own half, but formation slots reach x = 0.85 (the opponent's half). Kickoff positions are the formation compressed into the team's own half (e.g. x scaled by about 0.5), with the kicking team's taker on the centre spot. The same scaling idea later serves compactness and line height.
+
 ### Passing graph: every player can pass to every player
 
 The graph is complete: any player can in principle pass to any other teammate (the goalkeeper to a striker included). Nothing in `Formation` restricts passing. Whether a pass is chosen depends only on its live feasibility and its score, so a poor pass is one with a low score, not a missing edge. The live graph is built from the lineup's players (every ordered teammate pair), and `Formation` stores no pass links. Do not add static pass restrictions to formations.
@@ -309,20 +322,21 @@ Working order agreed with the author. Update this list as items are finished or 
 1. Domain basics: `Pitch`, `Coordinates`, `Position`, `Player`, `Team` with validation and tests.
 2. `Slot`, `Formation` (complete passing graph, no stored pass links), `Lineup`, team lineup and substitutions.
 3. `Formation.flipped()` and `placeOnPitch` for kickoff placement.
+4. `Formations`: 16 concrete formations built line by line, with a parameterized `FormationsTest`; console formation viewer in `main.Main`.
 
 **Next**
 
-4. Concrete formations in `Formations`, built line by line from per-line helpers (in progress: 4-3-3 x4, 4-4-2 x3, 4-2-4, 4-2-3-1, 4-1-2-1-2 narrow/wide, 3-4-3, 3-4-3 diamond, 5-3-2, 5-4-1, 5-2-1-2 exist). Then a looped `FormationsTest` covering all of them.
-5. `Ball`.
-6. `MatchState`, reading live state from its owners (section 12).
-7. The match: loop, time, halves, kickoff and restarts.
-8. Live graph: typed, weighted edges built from the lineup and live coordinates (complete pass graph, feasibility weights).
-9. Player decision-making (`tactics`): score candidate actions and pick the best; then resolution updates state and refreshes the graph.
-10. Team instructions: mentality, compactness, width, line height.
+5. `Ball`: held by a player (position = that player's coordinates, not stored twice) or loose (own coordinates); no height yet.
+6. `Match`: owns the pitch, both teams, ball, score, clock/half and attack directions; kickoff setup and half-time side swap.
+7. `MatchState`: a read-only view over `Match` (section 12).
+8. The time-stepped match loop, restarts, and rule detection (see "Restarts and set pieces" in section 12).
+9. Live graph: typed, weighted edges built from the lineup and live coordinates (complete pass graph, feasibility weights).
+10. Player decision-making (`tactics`): score candidate actions and pick the best; then resolution updates state and refreshes the graph.
+11. Team instructions: mentality, compactness, width, line height.
 
 **Later (not before the core above is working)**
 
-- Team-builder UI and the data layer (CSV loading, custom JSON reader/writer). Confirm with the author where this sits relative to items 5–10.
+- Team-builder UI and the data layer (CSV loading, custom JSON reader/writer). Confirm with the author where this sits relative to items 5–11.
 - Player attributes and positional suitability, once real players are needed.
 - Tactical shapes (lines and units).
 - Match viewer with live manager controls.
